@@ -63,7 +63,6 @@ func (tsuite *TestSuite) SetupSuite() {
 
 func (tsuite *TestSuite) AfterTest(_, _ string) {
 	require.NoError(tsuite.T(), tsuite.Mock.ExpectationsWereMet())
-	tsuite.DB.Close()
 }
 
 func TestInit(t *testing.T) {
@@ -78,13 +77,13 @@ func userToRows(user domain.User) []driver.Value {
 		user.ID, user.Email, user.Username,
 		user.Name, user.ProfileImgURL,
 		user.Location, user.Description,
-		user.Followers, user.Following,
+		user.FollowersCount, user.FollowingCount,
 		user.TwitterName, user.FacebookName,
 		time.Now(), time.Now(),
 	}
 }
 
-// Warning! Columns order is important! 
+// Warning! Columns order is important!
 // MUST Modify this func if UserDB model changes!
 // See NewUserDBWriter() for columns that will be inserted.
 func userToInsertArgs(user domain.User) []driver.Value {
@@ -92,7 +91,7 @@ func userToInsertArgs(user domain.User) []driver.Value {
 		user.Email, user.Username,
 		user.Name, user.ProfileImgURL,
 		user.Location, user.Description,
-		user.Followers, user.Following,
+		user.FollowersCount, user.FollowingCount,
 		user.TwitterName, user.FacebookName,
 		AnyTimeArg{}, AnyTimeArg{},
 	}
@@ -114,6 +113,8 @@ func (tsuite *TestSuite) TestShouldGetByID() {
 
 	queryStr := regexp.QuoteMeta("SELECT * FROM `users` WHERE (id = ?) ORDER BY `users`.`id` ASC LIMIT 1")
 
+	tsuite.T().Log("\nDebug UserColumns:", UserColumns(), "\n")
+
 	// register sequence of expected operations
 	// and defined returned rows to be mocked
 	tsuite.Mock.ExpectQuery(queryStr).
@@ -132,6 +133,8 @@ func (tsuite *TestSuite) TestShouldGetByEmail() {
 		AddRow(userToRows(mockUser)...)
 
 	queryStr := regexp.QuoteMeta("SELECT * FROM `users` WHERE (email = ?) ORDER BY `users`.`id` ASC LIMIT 1")
+
+	tsuite.T().Log("\nDebug UserColumns:", UserColumns(), "\n")
 
 	// register sequence of expected operations
 	// and defined returned rows to be mocked
@@ -152,6 +155,8 @@ func (tsuite *TestSuite) TestShouldGetByUsername() {
 
 	queryStr := regexp.QuoteMeta("SELECT * FROM `users` WHERE (username = ?) ORDER BY `users`.`id` ASC LIMIT 1")
 
+	tsuite.T().Log("\nDebug UserColumns:", UserColumns(), "\n")
+
 	// register sequence of expected operations
 	// and defined returned rows to be mocked
 	tsuite.Mock.ExpectQuery(queryStr).
@@ -170,7 +175,7 @@ func (tsuite *TestSuite) TestShouldInsertOne() {
 	execStr := regexp.QuoteMeta(
 		"INSERT INTO `users` " +
 			"(`email`,`username`,`name`,`profile_img_url`,`location`,`description`," +
-			"`followers`,`following`,`twitter_name`,`facebook_name`," +
+			"`followers_count`,`following_count`,`twitter_name`,`facebook_name`," +
 			"`created_at`,`updated_at`) " +
 			"VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
 
@@ -202,13 +207,13 @@ func (tsuite *TestSuite) TestShouldUpdateOne() {
 	// order of fields are lexicographically sorted by gorm
 	// see NewUserDBUpdater for update-only fields
 	execStr := regexp.QuoteMeta("UPDATE `users` SET " +
-		"`description` = ?, `location` = ?, " + 
-		"`name` = ?, `profile_img_url` = ?")
+		"`description` = ?, `location` = ?, `name` = ?, `profile_img_url` = ?, `updated_at` = ? " +
+		"WHERE `users`.`id` = ?")
 
 	args := []driver.Value{
-		mockUser.Description, mockUser.Location, 
+		mockUser.Description, mockUser.Location,
 		mockUser.Name, mockUser.ProfileImgURL,
-		AnyTimeArg{},
+		AnyTimeArg{}, mockUser.ID,
 	}
 
 	// register expected tx operation

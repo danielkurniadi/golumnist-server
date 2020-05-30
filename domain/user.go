@@ -2,19 +2,19 @@ package domain
 
 // User ...
 type User struct {
-	ID            uint64 `json:"id;omitempty"`    // get - owner only
-	Email         string `json:"email;omitempty"` // create; get - owner only
-	Username      string `json:"username"`        // create; get - public
-	Name          string `json:"name"`
-	URL           string `json:"url"`
-	ProfileImgURL string `json:"profile_img_url"`
-	Location      string `json:"location"`
-	Description   string `json:"description"`
-	IsMe          bool   `json:"isme"`
-	Followers     int    `json:"followers"`
-	Following     int    `json:"following"`
-	TwitterName   string `json:"twitter_name"`
-	FacebookName  string `json:"facebook_name"`
+	ID             uint64 `json:"id;omitempty"`    // get - owner only
+	Email          string `json:"email;omitempty"` // create; get - owner only
+	Username       string `json:"username"`        // create; get - public
+	Name           string `json:"name"`
+	URL            string `json:"url"`
+	ProfileImgURL  string `json:"profile_img_url"`
+	Location       string `json:"location"`
+	Description    string `json:"description"`
+	IsMe           bool   `json:"isme"`
+	FollowersCount int    `json:"followers_count"`
+	FollowingCount int    `json:"following_count"`
+	TwitterName    string `json:"twitter_name"`
+	FacebookName   string `json:"facebook_name"`
 }
 
 // GetURL ...
@@ -31,11 +31,11 @@ type UserService interface {
 
 	// User getter/query interfaces
 	GetUserProfile(username string) (User, error)
-	GetRecommendUsers() ([]User, error) // no RecSys yet.
+	// GetRecommendUsers() ([]User, error) // no RecSys yet.
 
 	// User writer interfaces
 	GetOrCreateUser(email string, user User) (User, error)
-	DeleteUser(userID uint64) (User, error)
+	DeleteUser(userID uint64) error
 
 	// User updater interfaces
 	UpdateUsername(userID uint64, user User) (User, error)
@@ -65,7 +65,7 @@ type UserRepository interface {
 	// TODO:FetchMany(userFilter User, page int, limit int) ([]User, Metadata, error)
 
 	// Insert single user
-	InsertOne(userID uint64, user User) (User, error)
+	InsertOne(user User) (User, error)
 
 	// Update single user
 	UpdateOne(userID uint64, user User) (User, error)
